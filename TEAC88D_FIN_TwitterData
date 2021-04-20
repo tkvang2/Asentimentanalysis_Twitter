@@ -1,0 +1,57 @@
+#Make sure you have tweepy install
+import os
+import tweepy as tw
+import pandas as pd
+
+
+#replace the XXs with your keys once you get access to Twitter developer platform
+consumer_key='XXXXXXXXXXX'
+consumer_secret='XXXXXXXXXXX'
+access_token_key='XXXXXXXXXXX'
+access_token_secret='XXXXXXXXXXX'
+
+auth = tw.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token_key, access_token_secret)
+api = tw.API(auth, wait_on_rate_limit=True)
+
+
+#this is where we scrape the tweets
+#here im looking for asianamerican or kung flu or chinavirius and lastly asians.
+#with the 'new word' object, im filtering away retweets, keeping only original posts
+
+search_words = 'asianamerican%20OR%20kungflu%20OR%20chinavirus%20OR%20asians' 
+new_words = search_words + " -filter:retweets"
+date_since = "2020-4-01"
+
+# data_utill scrapes the tweets until that specific date, delete '#' and add in the date (year-day-month)
+#data_until = 
+
+#here, we're going to search for those tweets!
+tweets = tw.Cursor(api.search, 
+                           q=new_words,
+                           lang="en",
+                           since=date_since).items(100000)
+
+users_locs = [[tweet.user.screen_name, tweet.text,  tweet.user.location, tweet.retweet_count, tweet.source] for tweet in tweets]
+users_locs
+
+#^the above, users_loc , I actually know what things I wanted from the tweets so I took, screen name
+#their text, their location, number of retweets that tweet got and where theyre tweeting from
+
+#now lets turn it into dataframe to use
+tweet_text = pd.DataFrame(data=users_locs, 
+                    columns=['screen_name','text', 'location','retweet_count','source'])
+tweet_text
+
+#turn data into csv to save
+tweet_text.to_csv('twitterdata.csv')
+
+###########################
+#what if you want all the data and not just a few of what I grabbed and want to go from there?
+
+adata =([u for u in tweets])
+
+alltweetdata = pd.DataFrame(data=adata)
+alltweetdata[:5]
+
+alltweetdata.to_csv('alltwitterdata.csv')
