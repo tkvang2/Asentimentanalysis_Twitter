@@ -3,7 +3,7 @@
 # pip install textblob WordCloud
 
 import pandas as pd
-df = pd.read_csv('C:/Users/vang/Desktop/Python/AZNtwitter.csv')
+df = pd.read_csv('twitterdata.csv')
 df.head()
 
 import re
