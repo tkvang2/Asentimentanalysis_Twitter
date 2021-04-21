@@ -27,31 +27,26 @@ date_since = "2020-4-01"
 #data_until = 
 
 #here, we're going to search for those tweets!
-tweets = tw.Cursor(api.search, 
+tweets = tw.Cursor(api.search, tweet_mode='extended',
                            q=new_words,
                            lang="en",
-                           since=date_since).items(100000)
+                           since=date_since).items(500000)
 
-users_locs = [[tweet.user.screen_name, tweet.text,  tweet.user.location, tweet.retweet_count, tweet.source] for tweet in tweets]
+users_locs = [[tweet.user.name, tweet.user.screen_name, tweet.user.description, tweet.full_text, tweet.retweet_count, tweet.favorite_count, tweet.user.friends_count, tweet.user.followers_count, tweet.user.location, tweet.source, tweet.entities['urls']] for tweet in tweets]
 users_locs
 
+
 #^the above, users_loc , I actually know what things I wanted from the tweets so I took, screen name
-#their text, their location, number of retweets that tweet got and where theyre tweeting from
+#their name, screen name, text, retweet count, friend count, followers count, their location, and where theyre tweeting from
 
 #now lets turn it into dataframe to use
 tweet_text = pd.DataFrame(data=users_locs, 
-                    columns=['screen_name','text', 'location','retweet_count','source'])
+                    columns=['name','screen_name', 'description','text','retweet_count', 'favorite_count', 'friends_count', 'followers_count', 'location', 'source', 'tweet url'])
 tweet_text
 
 #turn data into csv to save
 tweet_text.to_csv('twitterdata.csv')
 
 ###########################
-#what if you want all the data and not just a few of what I grabbed and want to go from there?
-
-adata =([u for u in tweets])
-
-alltweetdata = pd.DataFrame(data=adata)
-alltweetdata[:5]
-
-alltweetdata.to_csv('alltwitterdata.csv')
+#https://www.geeksforgeeks.org/python-user-object-in-tweepy/
+#https://www.geeksforgeeks.org/python-status-object-in-tweepy/
