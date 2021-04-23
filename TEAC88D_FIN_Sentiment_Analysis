@@ -1,5 +1,5 @@
 #this is next step in twitter data analysis
-#make sure to install textbob and WordCloud
+#make sure to install textblob and WordCloud
 # pip install textblob WordCloud
 
 import pandas as pd
