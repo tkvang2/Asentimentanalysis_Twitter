@@ -1,0 +1,134 @@
+#pip install vaderSentiment
+
+import nltk
+nltk.download('vader_lexicon')
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+analyzer = SentimentIntensityAnalyzer()
+
+#load in the data
+import pandas as pd
+df = pd.read_csv('C:/Users/vang/Desktop/Python/AZNtwitter.csv', index_col=0)
+df.head()
+
+#import packages
+import re
+import pandas as pd 
+import numpy as np 
+import matplotlib.pyplot as plt 
+import seaborn as sns
+import string
+import nltk
+import warnings 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+%matplotlib inline
+
+#cleaning the tweets - function
+#cleaning means we're taking away twitter handles, URLs and special characters
+def remove_pattern(input_txt, pattern):
+    r = re.findall(pattern, input_txt)
+    for i in r:
+        input_txt = re.sub(i, '', input_txt)        
+    return input_txt
+def clean_tweets(tweets):
+    #remove twitter Return handles (RT @xxx:)
+    tweets = np.vectorize(remove_pattern)(tweets, "RT @[\w]*:") 
+    
+    #remove twitter handles (@xxx)
+    tweets = np.vectorize(remove_pattern)(tweets, "@[\w]*")
+    
+    #remove URL links (httpxxx)
+    tweets = np.vectorize(remove_pattern)(tweets, "https?://[A-Za-z0-9./]*")
+    
+    #remove special characters, numbers, punctuations (except for #)
+    tweets = np.core.defchararray.replace(tweets, "[^a-zA-Z]", " ")
+    
+    return tweets
+
+#LETS CLEAN + print data
+df['clean_text'] = clean_tweets(df['text'])
+df['clean_text'].head()
+
+
+#lets start our sentimental analysis
+scores = []
+# Declare variables for scores
+compound_list = []
+positive_list = []
+negative_list = []
+neutral_list = []
+for i in range(df['text'].shape[0]):
+#print(analyser.polarity_scores(sentiments_pd['text'][i]))
+    compound = analyzer.polarity_scores(df['text'][i])["compound"]
+    pos = analyzer.polarity_scores(df['text'][i])["pos"]
+    neu = analyzer.polarity_scores(df['text'][i])["neu"]
+    neg = analyzer.polarity_scores(df['text'][i])["neg"]
+    
+    scores.append({"Compound": compound,
+                       "Positive": pos,
+                       "Negative": neg,
+                       "Neutral": neu
+                  })
+                  
+#print our data, make sure we got it
+sentiments_score = pd.DataFrame.from_dict(scores)
+df = df.join(sentiments_score)
+df.head()
+
+#lets code the sentiments
+df['sentiment_type']=''
+df.loc[df.Compound>0,'sentiment_type']='POSITIVE'
+df.loc[df.Compound==0,'sentiment_type']='NEUTRAL'
+df.loc[df.Compound<0,'sentiment_type']='NEGATIVE'
+
+#bar chart
+plt.rcParams["figure.figsize"] = [20, 10]
+df.sentiment_type.value_counts().plot(kind='pie', autopct='%1.0f%%')
+
+
+# Create dataframe containing the polarity value and tweet text
+sentiment_df = pd.DataFrame(df, columns=["Compound", "clean_text"])
+
+sentiment_df.head()
+
+
+
+# Plot histogram of the polarity values
+fig, ax = plt.subplots(figsize=(8, 6))
+sentiment_df.hist(bins=[-1, -0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1],
+             ax=ax,
+             color="purple")
+
+plt.title("Sentiments from Tweets on Attitudes Towards Asian Americans during time of COVID")
+plt.show()
+
+
+#start our wordclouds
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+def word_cloud(wd_list):
+    stopwords = set(STOPWORDS)
+    all_words = ' '.join([text for text in wd_list])
+    wordcloud = WordCloud(
+        background_color='white',
+        stopwords=stopwords,
+        width=1600,
+        height=800,
+        random_state=1,
+        colormap='jet',
+        max_words=80,
+        max_font_size=200).generate(all_words)
+    plt.figure(figsize=(12, 10))
+    plt.axis('off')
+    plt.imshow(wordcloud, interpolation="bilinear");
+word_cloud(df['clean_text'])
+
+#positive wordcloud
+tws_pos=df['clean_text'][df['sentiment_type'] == 'POSITIVE']
+word_cloud(tws_pos)
+
+#neutral wordcloud
+tws_neu=df['clean_text'][df['sentiment_type'] == 'NEUTRAL']
+word_cloud(tws_neu)
+
+#negative wordcloud
+tws_negative=df['clean_text'][df['sentiment_type'] == 'NEGATIVE']
+word_cloud(tws_negative)
